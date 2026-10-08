@@ -19,3 +19,7 @@ The command prints `BLOCK`, yet exits with code 0. That is intentional: several 
 Every contract check passes. The policy ID exists. The response nonetheless claims a refund has already been processed, which violates the cited policy. A mechanically valid citation is not semantic support.
 
 The displayed grades in demo mode are authored fixtures. The program validates their shape and excerpts and applies the decision policy; it does not independently discover their semantic correctness.
+
+The report now leads with **Contract**, **Purpose**, **Assessment validity**, and **Decision**. Expand technical details only when you want the raw records. If the assessment is stale, a high stored score is not presented as a purpose pass.
+
+Ready to repair an example? Use the isolated-copy workflow in the [workshop](workshop.md); leave `data/scenarios.json` unchanged.

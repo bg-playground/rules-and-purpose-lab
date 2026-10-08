@@ -37,7 +37,7 @@ Requests set `store: false`; this does not make a broader claim about provider r
 
 Calibration compares threshold classifications on fixed candidates against authored references. It reports disagreements; it does not prove grader reliability. Review individual reasons, especially incorrect approval, not just totals. For production, replace or supplement these authored labels with independently reviewed domain examples and quantify agreement on a larger held-out set.
 
-The judge never sees fixture scores or expected decisions. In live mode, the generator sees only policy and customer text. The judge sees policy, customer text, rubric, and the actual generated candidate. Neither model supplies the final release decision.
+The judge never sees fixture scores or expected decisions. In live mode, the generator sees only policy and customer text. The judge sees policy, customer text, scenario requirement, rubric, and the actual generated candidate. Neither model supplies the final release decision.
 
 The adapter requests plain text JSON and validates it locally. Invalid JSON, missing fields, invalid scores, fabricated quotations, incomplete provider output, or refusal without usable text cannot create eligibility. No automatic repair silently converts a failed response into a passing one.
 
@@ -50,3 +50,7 @@ python -m rules_purpose live --model YOUR_GENERATOR_MODEL --judge-model YOUR_JUD
 Inspect each trial; one failing trial cannot be averaged away. Repeated live runs are observations of variability, not a statistical reliability claim. Provider behavior and aliases can change. Keep the original report when comparing runs and use unique output directories.
 
 Known limitation: live mode uses model-based purpose judgments without an independent human sign-off workflow. `ELIGIBLE` is a local criteria result, not release authorization. An external production process would still need calibrated risk policy, broader evidence, and appropriate accountable approval.
+
+## Input binding in v0.2
+
+The judge returns scores and evidence only. The harness attaches a fingerprint of the exact evaluated inputs; a judge-supplied fingerprint is rejected. Calibration also validates the stored reference binding, so changing a customer, candidate, policy, or rubric cannot silently reuse an old reference assessment. Raw model output is retained separately from the host-bound assessment.

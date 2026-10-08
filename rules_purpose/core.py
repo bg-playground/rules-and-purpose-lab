@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DIMENSIONS = ("relevance", "grounding", "actionability")
 ACTIONS = {"request_details", "escalate", "explain_policy", "check_shipment"}
-VERSIONS = {"contract": "contract-v1", "gate": "gate-v1", "dataset": "dataset-v1"}
+VERSIONS = {"contract": "contract-v1", "gate": "gate-v2", "dataset": "dataset-v2", "assessment_binding": "binding-v1"}
 
 
 def read_json(path):
@@ -16,6 +16,13 @@ def read_json(path):
 def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
                                     separators=(",", ":")).encode()).hexdigest()
+
+
+def assessment_input_fingerprint(case, raw, policy, rubric):
+    """Bind meaning-bearing inputs, not scores, expected outcomes, or split labels."""
+    return fingerprint({"binding_version": "binding-v1", "scenario_id": case["id"],
+                        "customer": case["customer"], "requirement": case["requirement"],
+                        "candidate": raw, "policy": policy, "rubric": rubric})
 
 
 def strict_json(raw):
@@ -55,16 +62,21 @@ def contracts(raw, policy):
     return [dict(id=i, **{"pass": bool(ok)}, detail=d) for i, ok, d in checks]
 
 
-def assessment_errors(assessment, raw, policy):
+def assessment_errors(assessment, raw, policy, *, expected_fingerprint=None):
     """Presence/exact-quote checks establish provenance, not semantic truth."""
-    if not isinstance(assessment, dict) or set(assessment) != {"scores", "evidence"}:
-        return ["Assessment requires exactly scores and evidence"]
+    if not isinstance(assessment, dict) or set(assessment) != {"scores", "evidence", "input_fingerprint"}:
+        return ["Assessment requires scores, evidence, and input_fingerprint"]
     scores, evidence = assessment["scores"], assessment["evidence"]
     if not isinstance(scores, dict) or set(scores) != set(DIMENSIONS):
         return ["Incomplete score dimensions"]
     if not isinstance(evidence, dict) or set(evidence) != set(DIMENSIONS):
         return ["Incomplete evidence dimensions"]
     errors = []
+    binding = assessment["input_fingerprint"]
+    if not isinstance(binding, str) or len(binding) != 64 or any(c not in "0123456789abcdef" for c in binding):
+        errors.append("Assessment input binding is missing or malformed")
+    elif expected_fingerprint is not None and binding != expected_fingerprint:
+        errors.append("Stale assessment: evaluated inputs changed; reassessment required")
     for dimension in DIMENSIONS:
         if type(scores[dimension]) is not int or scores[dimension] not in (0, 1, 2):
             errors.append(f"{dimension}: score must be integer 0..2")
@@ -107,10 +119,11 @@ def aggregate(records):
 
 def evaluate(case, raw, assessment, policy, rubric, *, reference=None, source="authored_fixture"):
     checks = contracts(raw, policy)
-    errors = assessment_errors(assessment, raw, policy)
+    input_fingerprint = assessment_input_fingerprint(case, raw, policy, rubric)
+    errors = assessment_errors(assessment, raw, policy, expected_fingerprint=input_fingerprint)
     disagreement = False
     if reference is not None:
-        ref_errors = assessment_errors(reference, raw, policy)
+        ref_errors = assessment_errors(reference, raw, policy, expected_fingerprint=input_fingerprint)
         errors += ["Reference: " + e for e in ref_errors]
         if not errors:
             disagreement = any((assessment["scores"][d] >= rubric["thresholds"][d]) !=
@@ -118,7 +131,7 @@ def evaluate(case, raw, assessment, policy, rubric, *, reference=None, source="a
     return {
         "scenario_id": case["id"], "split": case["split"], "customer": case["customer"],
         "requirement": case["requirement"], "candidate": raw,
-        "evidence_fingerprint": fingerprint({"case": case, "candidate": raw, "policy": policy, "rubric": rubric}),
+        "input_fingerprint": input_fingerprint,
         "assessment_source": source, "contracts": checks, "assessment": assessment,
         "assessment_errors": errors, "reference": reference, "disagreement": disagreement,
         "decision": decide(checks, assessment, errors, rubric, disagreement=disagreement),

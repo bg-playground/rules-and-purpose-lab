@@ -1,4 +1,4 @@
-# Release policy v1
+# Release policy v2
 
 Decisions apply to the evaluated candidate and scenario. They do not certify a product, deployment, or general model capability. No command deploys anything.
 
@@ -7,7 +7,7 @@ Decisions apply to the evaluated candidate and scenario. They do not certify a p
 | Priority | Evidence | Decision |
 | --- | --- | --- |
 | 1 | Any observed mandatory contract failure | BLOCK |
-| 2 | Candidate unavailable, absent checks, or missing/invalid purpose evidence | REVIEW |
+| 2 | Candidate unavailable, absent checks, or missing/invalid/stale purpose evidence | REVIEW |
 | 3 | In calibration, a material disagreement with the authored reference | REVIEW |
 | 4 | Any valid purpose score below its dimension threshold | BLOCK |
 | 5 | All required evidence present and criteria satisfied | ELIGIBLE |
@@ -23,6 +23,7 @@ For multiple cases/trials: any Block blocks the run; otherwise any Review requir
 - `dev-09`: simulated judge says eligible; authored reference identifies a promised exception → Review.
 - `matrix-04`: correct structure and sufficient fixture assessment → Eligible **for that fixture**.
 - Provider unavailable before generation → no observed candidate → Review.
+- Candidate changed while old excerpts still match → assessment input mismatch → Review, unless a known contract failure already blocks.
 
 ## Exit codes
 
@@ -37,4 +38,10 @@ CI executes offline acceptance tests and generates a demo report. It verifies th
 
 ## Handling review
 
-The report preserves the disagreement and evidence. A learner/reviewer should record which policy applies, why a score is defensible, and whether the rubric needs revision. Change the versioned fixtures/rubric through code review and rerun relevant cases. There is deliberately no automatic override or self-approval button. If the exercise calls for human validation, an actual person must perform and record it; the fixture labels are not a substitute.
+The report preserves the disagreement and evidence. A learner/reviewer should record which policy applies, why a score is defensible, and whether the rubric needs revision. Workshop learners use separate exercise files and record reassessment notes; maintainers change versioned fixtures/rubrics through code review and rerun relevant cases. There is deliberately no automatic override or self-approval button. If the exercise calls for human validation, an actual person must perform and record it; the fixture labels are not a substitute.
+
+## Reading v0.2 reports
+
+The teaching summary shows contract result, purpose result, assessment validity, decision, and next step. Stale or invalid evidence yields **NOT ESTABLISHED**, even if its raw scores are 2/2/2. A grader/reference conflict yields **DISPUTED**, with both sets of reasons shown. Exact excerpts and input binding validation do not establish semantic truth. Full raw values remain in expandable technical details and the JSON report.
+
+Learner exercises use `demo --exercise FILE`, write reports with mode `exercise`, and retain demo exit-code semantics: completing a teaching run returns 0 even when its candidate is Block or Review. Baseline datasets are never rewritten by exercise commands.

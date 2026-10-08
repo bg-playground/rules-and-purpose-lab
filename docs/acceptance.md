@@ -27,3 +27,18 @@ The checked-in example is generated from the four matrix cases and `dev-09`. Its
 ## Deliberately outside v0.1
 
 Web dashboard, multiple providers, real customer integrations, benchmark claims, automated human-review resolution, production deployment, BGSTM/NAT integrations, and paid hosting. Add them only when a concrete teaching or adoption need justifies their cost.
+
+## v0.2 bounded increment: evidence integrity and learner experience
+
+| Acceptance | Evidence |
+| --- | --- |
+| Old quotes cannot approve a modified candidate | Regression appends a false refund claim while preserving every prior quote; outcome Review |
+| Assessments bind every meaning-bearing input | Candidate, scenario ID, customer, requirement, policy, and rubric mutation tests |
+| Missing/invalid binding and stale calibration reference fail closed | Binding and reference regression cases |
+| Live binding belongs to actual submitted inputs | Mocked live generator/judge tests; model cannot provide its own binding |
+| Learners can repair a candidate without weakening baseline acceptance | Complete copy → repair → Review → explicit reassessment → Eligible exercise test; original remains Block |
+| Exercise tooling protects baseline and existing work | Protected-path, exclusive-create, and held-out-template tests |
+| Reports distinguish validity from high scores | Stale evidence displays Not Established; disagreements display Disputed with both reasons |
+| Technical evidence remains inspectable | JSON unchanged in purpose; expandable Markdown evidence and provenance |
+
+The original 16 scenario outcomes remain 8 Block / 1 Review / 7 Eligible. v0.2 does not add comparison tooling, live model runs, independent human validation, or deployment. Existing fixture labels were preserved and bound to their current inputs; this migration does not claim fresh semantic validation.
