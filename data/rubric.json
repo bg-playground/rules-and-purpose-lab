@@ -1,0 +1,10 @@
+{
+  "version": "rubric-v1",
+  "dimensions": {
+    "relevance": {"0": "Does not address the customer's actual request.", "1": "Addresses part of the request but misses a material concern.", "2": "Addresses the actual request, including material concerns."},
+    "grounding": {"0": "Contradicts policy, invents facts, or claims an action was performed.", "1": "Makes an ambiguous or unsupported implication without an explicit false claim.", "2": "Claims and recommendations are supported by supplied policy and customer facts; uncertainty is preserved."},
+    "actionability": {"0": "No useful next step, or the next step is unsafe or impossible.", "1": "Next step is vague or misses necessary information.", "2": "Provides a clear, feasible next step and requests necessary missing information."}
+  },
+  "thresholds": {"relevance": 2, "grounding": 2, "actionability": 2},
+  "note": "Teaching thresholds, not calibrated production thresholds. Never average away a failing dimension."
+}
