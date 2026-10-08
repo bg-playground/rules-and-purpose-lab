@@ -61,9 +61,18 @@ Deterministic checks are one kind of evaluation. Purpose evidence can come from 
 
 A policy ID can exist while the response misuses its policy. Exact quotations can be real while a grader's conclusion is wrong. These are explicit exercises here.
 
+## Repair a response without changing the baseline
+
+```bash
+python -m rules_purpose.exercise init --case matrix-02 --file exercises/return-format.json
+python -m rules_purpose demo --exercise exercises/return-format.json --out reports/exercise-before
+```
+
+Edit the learner copy, then follow the [workshop repair steps](docs/workshop.md). The original four-quadrant examples and their acceptance tests stay intact. Changed inputs invalidate the old assessment even when every quoted excerpt still matches. After reviewing the scores and evidence, explicitly record a reassessment note; evaluations never refresh bindings automatically.
+
 ## Inspect the evidence
 
-Each report includes the customer need, requirement, raw candidate, individual checks, rubric scores, quoted evidence, decision reason, policy/rubric snapshots, dataset and prompt fingerprints, and code revision/dirty state. Live runs additionally record returned model IDs, response IDs, token usage when provided, raw grader output, and UTC run time. Fingerprints identify inputs; they do not prove correctness or make live output deterministic.
+Reports lead with the customer purpose, contract result, purpose result, assessment validity, release decision, and required next step. Invalid or stale scores are withheld from the teaching summary; disputed judgments are shown side by side. Expand the technical sections for raw evidence, policy/rubric snapshots, dataset and prompt fingerprints, code revision/dirty state, and any exercise review notes. Live runs additionally record returned model IDs, response IDs, token usage when provided, raw grader output, and UTC run time. Each stored assessment is bound to the exact candidate, scenario identity, customer context, requirement, policy, and rubric. A mismatch requires reassessment. Fingerprints do not prove semantic correctness, reviewer identity, or live determinism.
 
 The evidence chain is:
 
@@ -92,7 +101,7 @@ No live calls run in CI. A green CI badge means the lab behaves as specified, in
 | [Release policy](docs/release-policy.md) | Decision precedence, no score averaging, and review states |
 | [Workshop](docs/workshop.md) | Predict, run, inspect, repair, and challenge a grader |
 | [Limitations](docs/limitations.md) | Coverage, calibration, variability, and production boundaries |
-| [Acceptance and scope](docs/acceptance.md) | The bounded v0.1 deliverable and its verification |
+| [Acceptance and scope](docs/acceptance.md) | The v0.1 foundation and bounded v0.2 improvements |
 
 The four holdout cases are public for teaching. Avoid inspecting/tuning against them during the exercise; once you do, treat them as development data. They are not a secret benchmark.
 

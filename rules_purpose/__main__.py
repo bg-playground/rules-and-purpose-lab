@@ -5,7 +5,7 @@ import subprocess
 from datetime import datetime, timezone
 
 from .core import (ROOT, VERSIONS, read_json, fingerprint, strict_json, evaluate,
-                   aggregate, assessment_errors, contracts, decide)
+                   aggregate, assessment_input_fingerprint, decide)
 from .provider import respond, ProviderError
 from .report import write_report
 
@@ -22,11 +22,16 @@ def run_live(case, policy, rubric, generate_prompt, judge_prompt, model, judge_m
             raw, trace['generation'] = call(model, generate_prompt,
                                           {'policy':policy, 'customer':case['customer']}, api_key)
         judge_payload = {'customer':case['customer'], 'policy':policy,
-                         'rubric':rubric, 'candidate':raw}
+                         'rubric':rubric, 'requirement':case['requirement'], 'candidate':raw}
         judge_raw, trace['judge'] = call(judge_model, judge_prompt, judge_payload, api_key)
         trace['judge_raw'] = judge_raw
         try:
             assessment = strict_json(judge_raw)
+            if not isinstance(assessment, dict) or set(assessment) != {'scores', 'evidence'}:
+                error = 'Judge must return exactly scores and evidence; input binding is assigned by the harness'
+                assessment = None
+            else:
+                assessment['input_fingerprint'] = assessment_input_fingerprint(case, raw, policy, rubric)
         except (TypeError, ValueError):
             error = 'Judge returned invalid strict JSON'
     except ProviderError as exc:
@@ -56,7 +61,10 @@ def main(argv=None):
     parser.add_argument('--model', help='Generator model ID; choose one available to your account')
     parser.add_argument('--judge-model', help='Judge model ID; a separate model is preferable but not independent validation')
     parser.add_argument('--out', default='reports/latest')
+    parser.add_argument('--exercise', help='Evaluate a learner copy in demo mode; never changes baseline fixtures')
     args = parser.parse_args(argv)
+    if args.exercise and (args.mode != 'demo' or args.case or args.split != 'dev'):
+        parser.error('--exercise is for demo only and cannot be combined with --case or --split')
     if not 1 <= args.repeat <= 5:
         parser.error('--repeat must be between 1 and 5')
     if args.mode == 'demo' and args.repeat != 1:
@@ -69,7 +77,16 @@ def main(argv=None):
     policy = read_json(ROOT/'data/policy.json')
     rubric = read_json(ROOT/'data/rubric.json')
     dataset = read_json(ROOT/'data/scenarios.json')
-    cases = [c for c in dataset['cases'] if args.split == 'all' or c['split'] == args.split]
+    exercise = None
+    if args.exercise:
+        from .exercise import load_exercise
+        try:
+            exercise = load_exercise(args.exercise)
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        cases = [exercise['case']]
+    else:
+        cases = [c for c in dataset['cases'] if args.split == 'all' or c['split'] == args.split]
     if args.case:
         unknown = set(args.case) - {c['id'] for c in cases}
         if unknown:
@@ -85,7 +102,7 @@ def main(argv=None):
                 simulated = case.get('simulated_judge')
                 record = evaluate(case,case['candidate'],simulated or case['assessment'],policy,rubric,
                                   reference=case['assessment'] if simulated else None,
-                                  source='simulated_judge_fixture' if simulated else 'authored_fixture')
+                                  source='learner_exercise' if exercise else 'simulated_judge_fixture' if simulated else 'authored_fixture')
             else:
                 record = run_live(case,policy,rubric,prompts['generate'],prompts['judge'],
                                   args.model,args.judge_model,key,calibrate=args.mode == 'calibrate')
@@ -100,14 +117,18 @@ def main(argv=None):
     interpretation = ('Offline replay of authored teaching fixtures. Mixed candidates are intentionally blocked; this is not a release judgment on a model or on the lab. No live API calls occurred.' if offline else
                       'Live calibration against authored fixture assessments; these are not independent human labels. Outcome concerns this calibration run, not generator release.' if args.mode == 'calibrate' else
                       'Live candidate evaluation on the selected scenarios only. Eligible means this lab\'s criteria were met; it is not proof of production readiness or human approval.')
-    report = {'mode':args.mode, 'outcome':aggregate(records), 'interpretation':interpretation,
+    if exercise:
+        interpretation = 'Offline learner exercise; no fresh model grading or independent human validation. A reassessment note records the learner’s stated review, not proof that it occurred. No live API calls occurred.'
+    report = {'mode':'exercise' if exercise else args.mode, 'outcome':aggregate(records), 'interpretation':interpretation,
               'provenance':{'versions':{**VERSIONS,'policy':policy['version'],'rubric':rubric['version']},
                             'dataset_provenance':dataset['assessment_provenance'],
                             'dataset_fingerprint':fingerprint(dataset),
+                            'exercise':exercise,
+                            'exercise_fingerprint':fingerprint(exercise) if exercise else None,
                             'prompt_fingerprints':{k:fingerprint(v) for k,v in prompts.items()},
                             'prompts':prompts, 'code_revision':revision,'working_tree_dirty':dirty,
                             'created_at':None if offline else datetime.now(timezone.utc).isoformat(),
-                            'split':args.split,'repeats':args.repeat,
+                            'split':'exercise' if exercise else args.split,'repeats':args.repeat,
                             'requested_generator':args.model if args.mode == 'live' else None,
                             'requested_judge':args.judge_model if not offline else None},
               'policy':policy,'rubric':rubric,'records':records}

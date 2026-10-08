@@ -145,7 +145,7 @@ def test_live_separates_generation_from_grading_and_excludes_reference_labels():
         calls.append((model,payload))
         assert key == 'test-only'
         assert 'assessment' not in payload and 'expected' not in payload
-        return (GOOD['candidate'] if len(calls)==1 else json.dumps(GOOD['assessment']), fake_metadata(model))
+        return (GOOD['candidate'] if len(calls)==1 else json.dumps({k:v for k,v in GOOD['assessment'].items() if k != 'input_fingerprint'}), fake_metadata(model))
     result = run_live(GOOD,POLICY,RUBRIC,'generate','judge','generator','grader','test-only',call=fake)
     assert [c[0] for c in calls] == ['generator','grader']
     assert 'candidate' not in calls[0][1]
@@ -159,7 +159,7 @@ def test_calibration_uses_fixed_candidate_and_identifies_disagreement():
     def fake(model,instructions,payload,key):
         assert model == 'grader'
         assert payload['candidate'] == case['candidate']
-        return json.dumps(case['simulated_judge']),fake_metadata(model)
+        return json.dumps({k:v for k,v in case['simulated_judge'].items() if k != 'input_fingerprint'}),fake_metadata(model)
     result = run_live(case,POLICY,RUBRIC,'g','j',None,'grader','test',calibrate=True,call=fake)
     assert result['decision']['status'] == 'REVIEW'
     assert result['disagreement']

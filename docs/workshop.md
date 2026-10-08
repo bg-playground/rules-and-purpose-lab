@@ -22,13 +22,40 @@ Open `reports/workshop-start/report.md`. Find a useful answer that fails integra
 
 ## Minutes 7–12: repair one layer at a time
 
-Work on a local branch. Edit [data/scenarios.json](../data/scenarios.json).
+Keep the baseline dataset unchanged. Create an isolated learner copy:
 
-1. For `matrix-02`, wrap the useful answer in the required JSON fields. Preserve its meaning. Make `candidate_quote` values exact substrings of the new raw candidate. Re-run that single case.
-2. For `matrix-01`, replace the catalog advice with a useful, policy-supported return response. Review all three rubric dimensions. Update the authored assessment and its evidence only after explaining your reasoning; do not merely raise scores to get green.
-3. Update the fixtures' `expected` values only when justified by the new evidence. Run pytest. In a collaborative workshop, ask another person to review your edits.
+```bash
+python -m rules_purpose.exercise init --case matrix-02 --file exercises/return-format.json
+python -m rules_purpose demo --exercise exercises/return-format.json --out reports/exercise-before
+```
 
-Because demo mode replays fixture assessments, changing only the candidate does **not** create a fresh semantic grade. Stale quotations should trigger Review. Even if old quotations still match, their meaning must be reassessed. This is an intentional lesson about maintaining evaluation data.
+Open `exercises/return-format.json`. In `case.candidate`, wrap the existing useful answer in the required JSON fields. For this exact exercise, replace that field with:
+
+```json
+"candidate": "{\"reply\": \"Your unused lamp is within the 30-day return window. Please provide your order number so support can help start a return request.\", \"action\": \"request_details\", \"policy_ids\": [\"P1\"]}"
+```
+
+Keep the surrounding file valid JSON. Evaluate the changed copy:
+
+```bash
+python -m rules_purpose demo --exercise exercises/return-format.json --out reports/exercise-stale
+```
+
+**Expected: Review.** The contract now passes, but the original assessment belongs to the old plain-text candidate. Its quotations still match; its input fingerprint does not. An evaluation run never silently refreshes that fingerprint.
+
+Review all three scores, quotations, and reasons against the current customer, candidate, policy, and rubric. In this formatting-only repair, the semantic assessment remains applicable. Record your completed reassessment with a meaningful note:
+
+```bash
+python -m rules_purpose.exercise reassess --file exercises/return-format.json --note "Reviewed all three dimensions: only the JSON wrapper changed; the advice, scores, and excerpts remain supported."
+python -m rules_purpose demo --exercise exercises/return-format.json --out reports/exercise-after
+python -m pytest -q
+```
+
+**Expected: the exercise is Eligible and baseline tests still pass.** The original `matrix-02` stays blocked, preserving the four-quadrant demonstration. There is no `expected` field to change in a learner copy.
+
+The reassessment command validates scores and excerpts and records your note with the new input binding. It does not perform semantic grading, change scores, prove you reviewed anything, or grant release approval. A fingerprint is an integrity aid, not authority. If you change the advice, review and edit the assessment before recording reassessment. Never refresh a fingerprint just to get green.
+
+**Optional extension:** create a second copy of `matrix-01`, replace the irrelevant catalog advice, and revise the assessment with defensible evidence. Have another participant review it. Learner files live in the ignored `exercises/` directory; commands refuse to overwrite existing exercises or write into baseline files. Held-out cases are not exercise templates.
 
 ## Minutes 12–16: challenge the judge
 
