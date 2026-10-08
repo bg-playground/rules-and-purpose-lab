@@ -9,3 +9,5 @@ reports/
 .env
 .env.*
 exercises/
+_site/
+site-review/

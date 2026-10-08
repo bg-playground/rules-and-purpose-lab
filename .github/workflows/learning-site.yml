@@ -1,0 +1,60 @@
+name: Learning site
+on:
+  pull_request:
+    paths: ['site/**', 'scripts/**', 'docs/workshop.md', 'docs/presentation/**', '.github/workflows/learning-site.yml']
+  push:
+    branches: [main]
+    paths: ['site/**', 'scripts/**', 'docs/workshop.md', 'docs/presentation/**', '.github/workflows/learning-site.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python scripts/build_learning_site.py
+      - name: Install browser for responsive verification
+        run: |
+          npm install --prefix "$RUNNER_TEMP/site-browser" playwright@1.62.1
+          "$RUNNER_TEMP/site-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Check responsive pages and downloads
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/site-browser/node_modules/playwright
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory _site &
+          node scripts/check_learning_site.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: learning-site-review
+          path: |
+            site-review/
+            _site/
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: _site
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: learning-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy learning site
+        id: deployment
+        uses: actions/deploy-pages@v4

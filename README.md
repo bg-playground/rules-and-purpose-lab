@@ -10,7 +10,7 @@ A small customer-support lab for QA engineers, developers, and business analysts
 
 **Python 3.11+ · No runtime dependencies · No API key for the workshop**
 
-[Five-minute introduction](docs/first-five-minutes.md) · [20-minute workshop](docs/workshop.md) · [Teaching deck](docs/presentation/Rules_and_Purpose_Lab_Teaching_Deck.pptx) · [Example report](examples/report.md)
+[Learning site](https://bg-playground.github.io/rules-and-purpose-lab/) · [Five-minute introduction](docs/first-five-minutes.md) · [20-minute workshop](docs/workshop.md) · [Teaching deck](docs/presentation/Rules_and_Purpose_Lab_Teaching_Deck.pptx) · [Example report](examples/report.md)
 
 ## One customer, four outcomes
 
@@ -82,7 +82,7 @@ Input fingerprints detect stale assessments. They do not prove semantic correctn
 
 The seven-slide presentation introduces the examples before the hands-on exercise. It includes editable tables and presenter notes with discussion prompts and source references.
 
-**[Download the PowerPoint deck](docs/presentation/Rules_and_Purpose_Lab_Teaching_Deck.pptx)** · [Slide guide and facilitator notes](docs/presentation/README.md)
+**[Read the slides in your browser](https://bg-playground.github.io/rules-and-purpose-lab/slides.html)** · [Open the PDF](docs/presentation/Rules_and_Purpose_Lab_Teaching_Deck.pdf) · [Download PowerPoint](docs/presentation/Rules_and_Purpose_Lab_Teaching_Deck.pptx) · [Slide guide and facilitator notes](docs/presentation/README.md)
 
 The next learning check is a small teaching trial: can someone unfamiliar with the lab complete the exercise and explain why contract compliance alone cannot establish release readiness?
 
